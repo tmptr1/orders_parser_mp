@@ -293,6 +293,4 @@ def app_start():
 if __name__ == '__main__':
     # main()
     app_start()
-    # log(444)
-    # log('logs ??')
-
+    # from fdo
