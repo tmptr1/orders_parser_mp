@@ -477,7 +477,7 @@ class OrdersLoader(QThread):
         ya_shops = []
         for shop_name, business_id, campaignId, api_key in self.API_KEYS.get('YA_KEYS'):
             self.ya_count = 0
-            new_orders = self.get_orders_from_yndx(shop_name, api_key, business_id, campaignId)
+            new_orders = self.get_orders_from_yndx(shop_name, api_key, business_id, campaignId, default_check=False)
             ya_shops.append([shop_name, self.ya_count])
             for article in new_orders:
                 if orders.get(article):
@@ -701,7 +701,8 @@ class OrdersLoader(QThread):
 
         msg = ''
         if default_check:
-            timeFrom = f"{self.cur_check_datetime.date()}T{self.cur_check_datetime.time()}"
+            # timeFrom = f"{self.cur_check_datetime.date()}T{self.cur_check_datetime.time()}"
+            timeFrom = f"{self.last_check_date.date()}T{self.last_check_date.time()}"
             timeTo = f"{self.cur_time.date()}T{self.cur_time.time()}"
             dateFrom = f"{self.last_check_date.date()}"
             dateTo = f"{self.cur_time.date()}"
@@ -741,7 +742,6 @@ class OrdersLoader(QThread):
 
         products_dict = dict()
         next_page_token = ''
-
         while next_page_token or next_page_token == '':
             response = requests.post(url=f"{YA_URL}/v1/businesses/{business_id}/orders", headers=headers, json=data,
                                      params={"limit": 50, "pageToken": next_page_token}, timeout=100)
@@ -754,11 +754,11 @@ class OrdersLoader(QThread):
 
             for order in orders:
                 creationTime = order['creationDate'][:19]
-                # if default_check:
-                if creationTime > timeFrom or creationTime > timeTo:
-                    # print(creationTime, '>', timeFrom, creationTime > timeFrom)
+                if default_check:
+                    # print(creationTime, '<', timeFrom, creationTime < timeFrom)
                     # print(creationTime, '>', timeTo, creationTime > timeTo)
-                    continue
+                    if creationTime < timeFrom or creationTime > timeTo:  # creationTime > timeFrom
+                        continue
 
                 for item in order['items']:
                     article = str(item["offerId"]).strip()
