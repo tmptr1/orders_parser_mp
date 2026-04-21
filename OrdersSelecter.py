@@ -71,7 +71,7 @@ class OrdersSelecter(QThread):
             ozon_shops = []
             for shop_name, client_id, api_key in self.API_KEYS.get('OZON_KEYS'):
                 cnt, new_orders = self.get_orders_from_ozon(shop_name, client_id, api_key)
-                ozon_shops.append([f"[ozon] {shop_name}", cnt, '#48a7f0'])
+                ozon_shops.append([f"[ozon] {shop_name}", cnt, '#5cd9ff'])  # #48a7f0
                 # colors_for_pie.append('#48a7f0')
                 for article in new_orders:
                     if orders.get(article):
@@ -82,7 +82,7 @@ class OrdersSelecter(QThread):
             wb_shops = []
             for shop_name, api_key in self.API_KEYS.get('WB_KEYS'):
                 cnt, new_orders = self.get_orders_from_wb(shop_name, api_key)
-                wb_shops.append([f"[wb] {shop_name}", cnt, '#d377f7'])
+                wb_shops.append([f"[wb] {shop_name}", cnt, '#f590fc'])  # #d377f7
                 # colors_for_pie.append('#d377f7')
                 for article in new_orders:
                     if orders.get(article):
@@ -249,8 +249,9 @@ class OrdersSelecter(QThread):
             # print(len(orders['result']['postings']), 'PST')
             for p in orders['result']['postings']:
                 # status = p['status']
-                # if status == 'cancelled':
-                #     continue
+                if p['status'] == 'cancelled':
+                    continue
+
                 for product in p['products']:
                     article = str(product['offer_id'])
                     p_count = product['quantity']
@@ -311,8 +312,8 @@ class OrdersSelecter(QThread):
             orders = response.json()
 
             for p in orders['orders']:
-                # if p['scanPrice'] is None:
-                #     continue
+                if p['scanPrice'] is None:
+                    continue
 
                 article = str(p['article']).strip()
 
@@ -375,6 +376,9 @@ class OrdersSelecter(QThread):
             orders = res['orders']
 
             for order in orders:
+                if order['status'] == 'CANCELLED':
+                    continue
+
                 for item in order['items']:
                     article = str(item["offerId"]).strip()
                     for i in range(2):  # первые 2 символа

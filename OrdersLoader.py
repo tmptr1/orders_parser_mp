@@ -571,8 +571,9 @@ class OrdersLoader(QThread):
             # print(len(orders['result']['postings']), 'PST')
             for p in orders['result']['postings']:
                 # status = p['status']
-                # if status == 'cancelled':
-                #     continue
+                if p['status'] == 'cancelled':
+                    continue
+
                 for product in p['products']:
                     article = str(product['offer_id'])
                     p_count = product['quantity']
@@ -664,8 +665,8 @@ class OrdersLoader(QThread):
             orders = response.json()
 
             for p in orders['orders']:
-                # if p['scanPrice'] is None:
-                #     continue
+                if p['scanPrice'] is None:
+                    continue
 
                 article = str(p['article']).strip()
 
@@ -751,8 +752,12 @@ class OrdersLoader(QThread):
 
             res = response.json()
             orders = res['orders']
+            # print(orders)
 
             for order in orders:
+                if order['status'] == 'CANCELLED':
+                    continue
+
                 creationTime = order['creationDate'][:19]
                 if default_check:
                     # print(creationTime, '<', timeFrom, creationTime < timeFrom)
