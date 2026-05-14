@@ -663,9 +663,27 @@ class OrdersLoader(QThread):
                 raise WbApiResponseException
 
             orders = response.json()
+            orders_id = []
 
             for p in orders['orders']:
-                if p['scanPrice'] is None:
+                orders_id.append(p['id'])
+
+            data_os = {
+                'orders': orders_id
+            }
+            orders_status = requests.post(url=fr"https://marketplace-api.wildberries.ru/api/v3/orders/status",
+                                          headers=headers,
+                                          json=data_os, timeout=100)
+            orders_status = orders_status.json()
+
+            canceled_orders = []
+            for o in orders_status['orders']:
+                if o['wbStatus'] in ['canceled', 'canceled_by_client', 'declined_by_client']:
+                    canceled_orders.append(o['id'])
+
+            for p in orders['orders']:
+                # if p['scanPrice'] is None:
+                if p['id'] in canceled_orders:
                     continue
 
                 article = str(p['article']).strip()
