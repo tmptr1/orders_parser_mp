@@ -677,9 +677,10 @@ class OrdersLoader(QThread):
             orders_status = orders_status.json()
 
             canceled_orders = []
-            for o in orders_status['orders']:
-                if o['wbStatus'] in ['canceled', 'canceled_by_client', 'declined_by_client']:
-                    canceled_orders.append(o['id'])
+            if orders_status.get('orders'):
+                for o in orders_status['orders']:
+                    if o['wbStatus'] in ['canceled', 'canceled_by_client', 'declined_by_client']:
+                        canceled_orders.append(o['id'])
 
             for p in orders['orders']:
                 # if p['scanPrice'] is None:

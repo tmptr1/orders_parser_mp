@@ -59,7 +59,7 @@ class OrdersSelecter(QThread):
 
         try:
             self.datetime_since = datetime.datetime(year=self.since.date().year(), month=self.since.date().month(), day=self.since.date().day())
-            self.datetime_to = datetime.datetime(year=self.to.date().year(), month=self.to.date().month(), day=self.to.date().day())
+            self.datetime_to = datetime.datetime(year=self.to.date().year(), month=self.to.date().month(), day=self.to.date().day()) + datetime.timedelta(days=1)
             self.log(f'Загрузка... {self.datetime_since} - {self.datetime_to}')
 
             # self.OZON_KEYS, self.WB_KEYS = get_api_keys()
@@ -330,9 +330,10 @@ class OrdersSelecter(QThread):
             orders_status = orders_status.json()
             # self.log(f"{orders_status=}")
             canceled_orders = []
-            for o in orders_status['orders']:
-                if o['wbStatus'] in ['canceled', 'canceled_by_client', 'declined_by_client']:
-                    canceled_orders.append(o['id'])
+            if orders_status.get('orders'):
+                for o in orders_status['orders']:
+                    if o['wbStatus'] in ['canceled', 'canceled_by_client', 'declined_by_client']:
+                        canceled_orders.append(o['id'])
 
             # self.log(f"{canceled_orders=}")
 
