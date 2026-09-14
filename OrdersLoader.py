@@ -558,7 +558,14 @@ class OrdersLoader(QThread):
                 },
             }
 
-            response = requests.post(url=fr"{OZON_URL}/v3/posting/fbs/list", headers=headers, json=data, timeout=100)
+            for attempt in range(1, 6):
+                response = requests.post(url=fr"{OZON_URL}/v3/posting/fbs/list", headers=headers, json=data, timeout=100)
+                if response.status_code == 200:
+                    break
+
+                time.sleep(15)
+                self.log(f"Попытка получить ответ...", html_msg=f"<span style='color:#eb712a;'>Попытка получить ответ...</span>")
+
             if response.status_code != 200:
                 # self.log("API не отвечает", html_msg="<span style='color:#eb712a;'>API не отвечает</span>")
                 raise OzonApiResponseException
@@ -657,8 +664,16 @@ class OrdersLoader(QThread):
                 "dateTo": dateTo,
             }
 
-            response = requests.get(url=fr"https://marketplace-api.wildberries.ru/api/v3/orders", headers=headers,
-                                    params=data, timeout=100)
+            for attempt in range(1, 6):
+                response = requests.get(url=fr"https://marketplace-api.wildberries.ru/api/v3/orders", headers=headers,
+                                        params=data, timeout=100)
+
+                if response.status_code == 200:
+                    break
+
+                time.sleep(15)
+                self.log(f"Попытка получить ответ...", html_msg=f"<span style='color:#eb712a;'>Попытка получить ответ...</span>")
+
             if response.status_code != 200:
                 raise WbApiResponseException
 
@@ -763,8 +778,17 @@ class OrdersLoader(QThread):
         products_dict = dict()
         next_page_token = ''
         while next_page_token or next_page_token == '':
-            response = requests.post(url=f"{YA_URL}/v1/businesses/{business_id}/orders", headers=headers, json=data,
-                                     params={"limit": 50, "pageToken": next_page_token}, timeout=100)
+            for attempt in range(1, 6):
+                response = requests.post(url=f"{YA_URL}/v1/businesses/{business_id}/orders", headers=headers, json=data,
+                                         params={"limit": 50, "pageToken": next_page_token}, timeout=100)
+
+                if response.status_code == 200:
+                    break
+
+                time.sleep(15)
+                self.log(f"Попытка получить ответ...",
+                         html_msg=f"<span style='color:#eb712a;'>Попытка получить ответ...</span>")
+
             # print(json.dumps(response.json(), indent=4, ensure_ascii=False))
             if response.status_code != 200:
                 raise YndxApiResponseException
