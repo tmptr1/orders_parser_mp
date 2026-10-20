@@ -226,7 +226,7 @@ class OrdersSelecter(QThread):
         ozon_count = 0
         cont = True
         loaded = 0
-        limit = 500
+        limit = 100
 
         while cont:
             data = {
@@ -237,25 +237,34 @@ class OrdersSelecter(QThread):
                 "limit": limit,
                 "offset": loaded,
             }
+            if cont and cont != True:
+                data['cursor'] = cont  # cont = cursor
 
-            for attempt in range(1, 6):
-                response = requests.post(url=fr"{OZON_URL}/v3/posting/fbs/list", headers=headers, json=data, timeout=100)
+            for attempt in range(1, 6):  # v3
+                response = requests.post(url=fr"{OZON_URL}/v4/posting/fbs/list", headers=headers, json=data, timeout=100)
 
                 if response.status_code == 200:
                     break
 
-                time.sleep(15)
+                # print(response.status_code)
+                # print(response.headers)
+                # self.log(response)
+                time.sleep(15 * attempt)
                 self.log(f"Попытка получить ответ...", html_msg=f"<span style='color:#eb712a;'>Попытка получить ответ...</span>")
 
             if response.status_code != 200:
+                # self.log(response)
                 raise OzonApiResponseException
 
             orders = response.json()
 
-            cont = orders['result']['has_next']
+            # cont = orders['has_next']  # orders['result']['has_next']
+            cont = orders['cursor']
+
+            # print(f"{orders=}")
             loaded += limit
             # print(len(orders['result']['postings']), 'PST')
-            for p in orders['result']['postings']:
+            for p in orders['postings']:  # orders['result']['postings']
                 # status = p['status']
                 if p['status'] == 'cancelled':
                     continue
@@ -317,7 +326,7 @@ class OrdersSelecter(QThread):
                 if response.status_code == 200:
                     break
 
-                time.sleep(15)
+                time.sleep(15 * attempt)
                 self.log(f"Попытка получить ответ...", html_msg=f"<span style='color:#eb712a;'>Попытка получить ответ...</span>")
 
             if response.status_code != 200:
@@ -414,7 +423,7 @@ class OrdersSelecter(QThread):
                 if response.status_code == 200:
                     break
 
-                time.sleep(15)
+                time.sleep(15 * attempt)
                 self.log(f"Попытка получить ответ...", html_msg=f"<span style='color:#eb712a;'>Попытка получить ответ...</span>")
 
             # print(json.dumps(response.json(), indent=4, ensure_ascii=False))

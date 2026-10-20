@@ -543,7 +543,7 @@ class OrdersLoader(QThread):
         sku_article_dict = dict()
         cont = True
         loaded = 0
-        limit = 500
+        limit = 100
 
         while cont:
             data = {
@@ -557,26 +557,39 @@ class OrdersLoader(QThread):
                     "financial_data": default_check,
                 },
             }
+            if cont and cont != True:
+                data['cursor'] = cont  # cont = cursor
 
-            for attempt in range(1, 6):
-                response = requests.post(url=fr"{OZON_URL}/v3/posting/fbs/list", headers=headers, json=data, timeout=100)
+            for attempt in range(1, 6):  # v3
+                response = requests.post(url=fr"{OZON_URL}/v4/posting/fbs/list", headers=headers, json=data, timeout=100)
+
+                # self.log(response.status_code)
+                # self.log(response)
+
                 if response.status_code == 200:
                     break
 
-                time.sleep(15)
+                # self.log(response)
+
+                time.sleep(15 * attempt)
                 self.log(f"Попытка получить ответ...", html_msg=f"<span style='color:#eb712a;'>Попытка получить ответ...</span>")
 
             if response.status_code != 200:
                 # self.log("API не отвечает", html_msg="<span style='color:#eb712a;'>API не отвечает</span>")
+                # self.log(response)
                 raise OzonApiResponseException
 
             orders = response.json()
+            # print(orders)
+            # self.log(orders)
 
-            cont = orders['result']['has_next']
+            # cont = orders['has_next']  # orders['result']['has_next']
+            cont = orders['cursor']
+
             loaded += limit
 
             # print(len(orders['result']['postings']), 'PST')
-            for p in orders['result']['postings']:
+            for p in orders['postings']:  # orders['result']['postings']
                 # status = p['status']
                 if p['status'] == 'cancelled':
                     continue
@@ -602,8 +615,10 @@ class OrdersLoader(QThread):
                         art = sku_article_dict[product['product_id']]  # sku
                         if not art:
                             continue
-                        new_price = product['customer_price']
+                        new_price = float(product['customer_price']['amount'])  # product['customer_price']
                         price = self.products_price_dict.get(art, -1)
+                        # print(new_price)
+                        # print(price)
                         if price > new_price:
                             self.products_price_dict[art] = new_price
                         else:
@@ -671,7 +686,7 @@ class OrdersLoader(QThread):
                 if response.status_code == 200:
                     break
 
-                time.sleep(15)
+                time.sleep(15 * attempt)
                 self.log(f"Попытка получить ответ...", html_msg=f"<span style='color:#eb712a;'>Попытка получить ответ...</span>")
 
             if response.status_code != 200:
@@ -785,7 +800,7 @@ class OrdersLoader(QThread):
                 if response.status_code == 200:
                     break
 
-                time.sleep(15)
+                time.sleep(15 * attempt)
                 self.log(f"Попытка получить ответ...",
                          html_msg=f"<span style='color:#eb712a;'>Попытка получить ответ...</span>")
 
